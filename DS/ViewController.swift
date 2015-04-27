@@ -1,25 +1,109 @@
 //
-//  ViewController.swift
+//  viewController.swift
 //  DS
 //
-//  Created by Danny Sandler on 4/14/15.
+//  Created by Danny Sandler on 4/20/15.
 //  Copyright (c) 2015 Danny Sandler. All rights reserved.
 //
 
 import UIKit
 
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, UIPageViewControllerDataSource {
+    
+    // MARK: - Variables
+    private var pageViewController: UIPageViewController?
+    
+    // Initialize it right away here
+    private let contentImages = ["dev2.png",
+        "dev2b.png",
+        "film2a.png",
+        "film2b.png",
+        "tech3.png",
+        "apple6.png",
+    "other.png"];
+    
+    // MARK: - View Lifecycle
+    @IBOutlet weak var menuButton:UIBarButtonItem!
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        createPageViewController()
+        setupPageControl()
+        
+        if self.revealViewController() != nil {
+            menuButton.target = self.revealViewController()
+            menuButton.action = "revealToggle:"
+            self.view.addGestureRecognizer(self.revealViewController().panGestureRecognizer())
+        
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
-
-
+    private func createPageViewController() {
+        
+        let pageController = self.storyboard!.instantiateViewControllerWithIdentifier("PageController") as! UIPageViewController
+        pageController.dataSource = self
+        
+        if contentImages.count > 0 {
+            let firstController = getItemController(0)!
+            let startingViewControllers: NSArray = [firstController]
+            pageController.setViewControllers(startingViewControllers as [AnyObject], direction: UIPageViewControllerNavigationDirection.Forward, animated: false, completion: nil)
+        }
+        
+        pageViewController = pageController
+        addChildViewController(pageViewController!)
+        self.view.addSubview(pageViewController!.view)
+        pageViewController!.didMoveToParentViewController(self)
+    }
+    
+    private func setupPageControl() {
+        let appearance = UIPageControl.appearance()
+        appearance.pageIndicatorTintColor = UIColor.grayColor()
+        appearance.currentPageIndicatorTintColor = UIColor.whiteColor()
+        appearance.backgroundColor = UIColor.darkGrayColor()
+    }
+    
+    // MARK: - UIPageViewControllerDataSource
+    
+    func pageViewController(pageViewController: UIPageViewController, viewControllerBeforeViewController viewController: UIViewController) -> UIViewController? {
+        
+        let itemController = viewController as! PageItemController
+        
+        if itemController.itemIndex > 0 {
+            return getItemController(itemController.itemIndex-1)
+        }
+        
+        return nil
+    }
+    
+    func pageViewController(pageViewController: UIPageViewController, viewControllerAfterViewController viewController: UIViewController) -> UIViewController? {
+        
+        let itemController = viewController as! PageItemController
+        
+        if itemController.itemIndex+1 < contentImages.count {
+            return getItemController(itemController.itemIndex+1)
+        }
+        
+        return nil
+    }
+    
+    private func getItemController(itemIndex: Int) -> PageItemController? {
+        
+        if itemIndex < contentImages.count {
+            let pageItemController = self.storyboard!.instantiateViewControllerWithIdentifier("ItemController") as! PageItemController
+            pageItemController.itemIndex = itemIndex
+            pageItemController.imageName = contentImages[itemIndex]
+            return pageItemController
+        }
+        
+        return nil
+    }
+    
+    // MARK: - Page Indicator
+    
+    func presentationCountForPageViewController(pageViewController: UIPageViewController) -> Int {
+        return contentImages.count
+    }
+    
+    func presentationIndexForPageViewController(pageViewController: UIPageViewController) -> Int {
+        return 0
+    }
+    
 }
-
